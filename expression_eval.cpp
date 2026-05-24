@@ -90,6 +90,46 @@ char matchingOpen(char close)
     return '{';
 }
 
+// catch bad token sequences before conversion: consecutive ops, op next to bracket, empty brackets
+void validateTokens(const vector<Token> &tokens)
+{
+    for (int i = 0; i + 1 < (int)tokens.size(); i++)
+    {
+        string cur = tokens[i].first;
+        string next = tokens[i + 1].first;
+
+        if (cur == "OP" && next == "OP")
+        {
+            cerr << "Syntax error: consecutive operators '" << tokens[i].second << tokens[i + 1].second << "'\n";
+            exit(1);
+        }
+
+        if (cur == "LPAR" && next == "RPAR")
+        {
+            cerr << "Syntax error: empty brackets\n";
+            exit(1);
+        }
+
+        if (cur == "LPAR" && next == "OP")
+        {
+            cerr << "Syntax error: operator after opening bracket\n";
+            exit(1);
+        }
+
+        if (cur == "OP" && next == "RPAR")
+        {
+            cerr << "Syntax error: operator before closing bracket\n";
+            exit(1);
+        }
+
+        if ((cur == "NUM" || cur == "VAR") && (next == "NUM" || next == "VAR"))
+        {
+            cerr << "Syntax error: missing operator between operands\n";
+            exit(1);
+        }
+    }
+}
+
 // shunting-yard: infix tokens -> postfix tokens
 vector<Token> toPostfix(const vector<Token> &tokens)
 {
@@ -254,6 +294,8 @@ int main()
         cerr << "Syntax error: expression starts or ends with operator\n";
         return 1;
     }
+
+    validateTokens(tokens);
 
     vector<Token> postfix = toPostfix(tokens);
 
